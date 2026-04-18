@@ -15,6 +15,7 @@ except ImportError:
 BancoTag = Literal[
     "itau", "bradesco", "santander", "bb", "caixa", "btg",
     "nubank", "safra", "xp", "inter", "c6", "sicoob",
+    "bnb", "brb", "original", "pan", "bmg", "agibank", "picpay", "bs2", "bv",
 ]
 
 
