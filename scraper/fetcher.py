@@ -17,6 +17,13 @@ _NOISE_TERMS = [
     "auxiliar", "assistente", "analista junior", "trainee", "estágio",
     "recrutamento", "processo seletivo", "currículo", "indeed.com",
     "catho", "infojobs", "linkedin vagas", "glassdoor",
+    # Safra agrícola (não banco)
+    "safra de", "safra 202", "safra brasileira", "safra de milho",
+    "safra de soja", "safra de cana", "safra de café", "safra de trigo",
+    "safra de arroz", "safrinha", "supersafra", "nova safra",
+    "próxima safra", "estimativa de safra", "produção de safra",
+    # Inter (ambíguo)
+    "inter miami", "inter de milão", "internazionale",
 ]
 
 
