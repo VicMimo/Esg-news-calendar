@@ -33,8 +33,9 @@ BANK_QUERIES = {
         "Nubank social", "Nubank impacto",
     ],
     "safra": [
-        "Banco Safra ESG", "Safra sustentabilidade",
-        "Safra verde", "Safra ambiental",
+        "Banco Safra ESG", "Banco Safra sustentabilidade",
+        "Banco Safra verde", "Banco Safra ambiental",
+        "Banco Safra social",
     ],
     "xp": [
         "XP Investimentos ESG", "XP sustentabilidade",
