@@ -5,9 +5,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import streamlit as st
 
 from app.calendar_view import render_calendar
-from app.components import render_sidebar_filters, render_month_nav
+from app.components import render_sidebar_filters, render_month_nav, MONTHS_PT
 from db.database import get_connection, query_articles, initialize_db, count_articles, count_by_bank
-from config.settings import DB_PATH
+from config.settings import DB_PATH, BANK_DISPLAY_NAMES, BANK_COLORS
 
 st.set_page_config(
     page_title="ESG News Calendar",
@@ -22,15 +22,13 @@ if css_path.exists():
 
 
 def main():
-    st.title("🌱 ESG News Calendar — Bancos Brasileiros")
-    st.caption("Rastreamento diário de ações ESG dos principais bancos do Brasil")
-
     initialize_db(DB_PATH)
 
     with get_connection(DB_PATH) as conn:
         total = count_articles(conn)
 
     if total == 0:
+        st.title("🌱 ESG News Calendar")
         st.warning(
             "Banco de dados vazio. Rode o scraper para buscar as primeiras notícias:\n\n"
             "```\npython -m scraper.pipeline\n```"
@@ -38,10 +36,8 @@ def main():
         st.stop()
 
     selected_banks, selected_esg = render_sidebar_filters()
-
     month_start, month_end = render_month_nav()
 
-    from config.settings import BANK_DISPLAY_NAMES, BANK_COLORS
     with get_connection(DB_PATH) as conn:
         bank_counts = count_by_bank(
             conn, month_start, month_end,
@@ -86,6 +82,13 @@ def main():
                     f'</div>',
                     unsafe_allow_html=True,
                 )
+
+    # Main content — calendar only, no title
+    st.markdown(
+        f'<h2 style="margin:0 0 12px;font-size:1.4rem;font-weight:700;">'
+        f'{MONTHS_PT[month_start.month - 1]} {month_start.year}</h2>',
+        unsafe_allow_html=True,
+    )
 
     with st.spinner("Carregando notícias..."):
         with get_connection(DB_PATH) as conn:

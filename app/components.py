@@ -4,6 +4,11 @@ from calendar import monthrange
 
 from config.settings import BANK_DISPLAY_NAMES, ESG_EMOJIS
 
+MONTHS_PT = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+]
+
 
 def render_month_nav() -> tuple[date, date]:
     today = date.today()
@@ -13,19 +18,19 @@ def render_month_nav() -> tuple[date, date]:
     if "nav_month" not in st.session_state:
         st.session_state.nav_month = today.month
 
-    months_pt = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-    ]
-
     year = st.session_state.nav_year
     month = st.session_state.nav_month
 
-    # Limits: Jan of current year ↔ current month
     at_min = (year == today.year and month == 1)
     at_max = (year == today.year and month == today.month)
 
-    col_prev, col_label, col_next = st.columns([1, 4, 1])
+    # Navigation rendered in sidebar
+    st.sidebar.markdown(
+        '<div class="sidebar-section-title">Período</div>',
+        unsafe_allow_html=True,
+    )
+
+    col_prev, col_label, col_next = st.sidebar.columns([1, 3, 1])
 
     with col_prev:
         if st.button("◀", disabled=at_min, use_container_width=True, key="nav_prev"):
@@ -38,17 +43,17 @@ def render_month_nav() -> tuple[date, date]:
 
     with col_label:
         with st.popover(
-            f"{months_pt[month - 1]} {year}",
+            f"{MONTHS_PT[month - 1][:3]} {year}",
             use_container_width=True,
         ):
             st.markdown("**Ir para mês/ano**")
-            available_years = list(range(today.year, today.year + 1))
+            available_years = [today.year]
             sel_year = st.selectbox("Ano", available_years, index=0, key="pop_year")
             max_month = today.month if sel_year == today.year else 12
             sel_month = st.selectbox(
                 "Mês",
                 list(range(1, max_month + 1)),
-                format_func=lambda m: months_pt[m - 1],
+                format_func=lambda m: MONTHS_PT[m - 1],
                 index=max_month - 1,
                 key="pop_month",
             )
@@ -74,10 +79,8 @@ def render_month_nav() -> tuple[date, date]:
 
 
 def render_sidebar_filters() -> tuple[list[str], list[str]]:
-    from config.settings import ESG_COLORS
-
     st.sidebar.markdown(
-        '<div style="display:flex;align-items:center;gap:10px;padding:8px 0 4px;">'
+        '<div style="display:flex;align-items:center;gap:8px;padding:12px 0 8px;">'
         '<div style="display:flex;gap:3px;">'
         '<span style="background:#2d6a4f;color:#fff;font-size:0.65rem;font-weight:900;'
         'padding:3px 6px;border-radius:4px;">E</span>'
@@ -86,7 +89,7 @@ def render_sidebar_filters() -> tuple[list[str], list[str]]:
         '<span style="background:#6a0572;color:#fff;font-size:0.65rem;font-weight:900;'
         'padding:3px 6px;border-radius:4px;">G</span>'
         '</div>'
-        '<span style="font-size:1.1rem;font-weight:800;">Filtros</span>'
+        '<span style="font-size:1rem;font-weight:800;">ESG News Calendar</span>'
         '</div>',
         unsafe_allow_html=True,
     )
