@@ -60,7 +60,17 @@ def render_month_nav() -> tuple[date, date]:
 
 
 def render_sidebar_filters() -> tuple[list[str], list[str]]:
-    st.sidebar.title("Filtros")
+    from config.settings import ESG_COLORS
+
+    st.sidebar.markdown(
+        '<div style="font-size:1.1rem;font-weight:800;padding:8px 0 4px;">Filtros</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.sidebar.markdown(
+        '<div class="sidebar-section-title">Bancos</div>',
+        unsafe_allow_html=True,
+    )
 
     all_banks = list(BANK_DISPLAY_NAMES.keys())
     all_bank_names = [BANK_DISPLAY_NAMES[b] for b in all_banks]
@@ -69,17 +79,21 @@ def render_sidebar_filters() -> tuple[list[str], list[str]]:
         "Bancos",
         options=all_bank_names,
         default=all_bank_names,
-        help="Selecione os bancos que deseja visualizar",
+        label_visibility="collapsed",
     )
     selected_banks = [b for b in all_banks if BANK_DISPLAY_NAMES[b] in selected_bank_names]
 
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("**Categoria ESG**")
-    esg_options = {"E": "Ambiental", "S": "Social", "G": "Governança"}
+    st.sidebar.markdown(
+        '<div class="sidebar-section-title">Categoria ESG</div>',
+        unsafe_allow_html=True,
+    )
+
+    esg_options = {"E": ("Ambiental", "#2d6a4f"), "S": ("Social", "#1d3557"), "G": ("Governança", "#6a0572")}
     selected_esg = []
-    for tag, label in esg_options.items():
+    for tag, (label, color) in esg_options.items():
+        emoji = ESG_EMOJIS[tag]
         checked = st.sidebar.checkbox(
-            f"{ESG_EMOJIS[tag]} {label}",
+            f"{emoji} {label}",
             value=True,
             key=f"esg_{tag}",
         )

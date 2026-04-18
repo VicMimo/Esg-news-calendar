@@ -50,23 +50,39 @@ def main():
         )
 
     filtered_total = sum(bank_counts.values())
-    st.sidebar.metric("Notícias no período", filtered_total)
+
+    st.sidebar.markdown(
+        f'<div class="sidebar-metric">'
+        f'<div class="sidebar-metric-label">Notícias no período</div>'
+        f'<div class="sidebar-metric-value">{filtered_total}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
     if bank_counts:
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("**Notícias por banco**")
+        max_count = max(bank_counts.values()) or 1
+        st.sidebar.markdown(
+            '<div class="sidebar-section-title">Notícias por banco</div>',
+            unsafe_allow_html=True,
+        )
         for bank in selected_banks or list(BANK_DISPLAY_NAMES.keys()):
             count = bank_counts.get(bank, 0)
             if count > 0:
                 color = BANK_COLORS.get(bank, "#6c757d")
                 name = BANK_DISPLAY_NAMES.get(bank, bank)
+                pct = int(count / max_count * 100)
                 st.sidebar.markdown(
-                    f'<div style="display:flex;justify-content:space-between;align-items:center;'
-                    f'padding:3px 0;font-size:0.85rem;">'
+                    f'<div class="bank-row">'
+                    f'<div class="bank-row-header">'
                     f'<span style="display:flex;align-items:center;gap:6px;">'
-                    f'<span style="width:10px;height:10px;border-radius:2px;background:{color};display:inline-block;"></span>'
-                    f'{name}</span>'
-                    f'<span style="font-weight:700;color:{color};">{count}</span>'
+                    f'<span style="width:8px;height:8px;border-radius:2px;background:{color};display:inline-block;flex-shrink:0;"></span>'
+                    f'<span style="font-size:0.82rem;">{name}</span>'
+                    f'</span>'
+                    f'<span style="font-weight:800;font-size:0.82rem;color:{color};">{count}</span>'
+                    f'</div>'
+                    f'<div class="bank-bar-track">'
+                    f'<div class="bank-bar-fill" style="width:{pct}%;background:{color};"></div>'
+                    f'</div>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
