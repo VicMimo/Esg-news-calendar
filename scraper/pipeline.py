@@ -46,18 +46,30 @@ def run_pipeline(
     raw_results = fetch_all_banks(BANK_QUERIES, delay_seconds=delay_between_queries, trusted_domains=trusted)
 
     current_year = date.today().year
+    seen_hashes: set[str] = set()
 
     with get_connection(db_path) as conn:
         for banco_tag, articles in raw_results:
             for raw in articles:
                 summary["total_fetched"] += 1
-                # Descarta artigos de anos diferentes do ano corrente
-                if raw["data"].year != current_year:
+                # Descarta artigos sem data ou de anos diferentes do corrente
+                art_date = raw.get("data")
+                if not art_date or not hasattr(art_date, "year"):
+                    summary["total_skipped"] += 1
+                    continue
+                if art_date.year != current_year:
                     summary["total_skipped"] += 1
                     continue
                 try:
                     keyword_tag = classify_esg(f"{raw.get('titulo', '')} {raw.get('resumo', '') or ''}")
                     title_hash = compute_title_hash(raw["titulo"], raw["data"])
+
+                    # Deduplicação cross-banco: mesma notícia não entra para dois bancos
+                    if title_hash in seen_hashes:
+                        summary["total_skipped"] += 1
+                        logger.debug(f"[SKIP CROSS-BANK DUP] {raw['titulo'][:60]}")
+                        continue
+                    seen_hashes.add(title_hash)
 
                     if ai_active:
                         ai_result = verify_and_classify(

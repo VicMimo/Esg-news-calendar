@@ -34,20 +34,23 @@ def render_sidebar_filters() -> tuple[list[str], list[str], tuple[date, date]]:
 
     st.sidebar.markdown("---")
 
-    current_year = date.today().year
+    current = date.today()
+    current_year = current.year
 
     months_pt = [
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
     ]
 
-    current = date.today()
+    # Meses disponíveis: janeiro até mês atual
+    available_months = list(range(1, current.month + 1))
+
     selected_year = st.sidebar.selectbox("Ano", [current_year], index=0)
     selected_month_idx = st.sidebar.selectbox(
         "Mês",
-        options=list(range(1, 13)),
+        options=available_months,
         format_func=lambda m: months_pt[m - 1],
-        index=current.month - 1,
+        index=len(available_months) - 1,
     )
 
     month_start = date(selected_year, selected_month_idx, 1)

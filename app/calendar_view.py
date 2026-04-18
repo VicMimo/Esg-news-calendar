@@ -6,7 +6,7 @@ import streamlit as st
 
 from config.settings import (
     ESG_COLORS, ESG_EMOJIS, BANK_DISPLAY_NAMES,
-    BANK_COLORS, BANK_COLORS_LIGHT, BANK_INITIALS,
+    BANK_COLORS, BANK_INITIALS,
 )
 
 _DAYS_PT = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
@@ -35,7 +35,6 @@ def render_article_card(article: dict) -> str:
     banco_tag = article.get("banco_tag", "")
     banco = BANK_DISPLAY_NAMES.get(banco_tag, banco_tag)
     bank_color = BANK_COLORS.get(banco_tag, "#6c757d")
-    bank_light = BANK_COLORS_LIGHT.get(banco_tag, "#dee2e6")
     esg_color = ESG_COLORS.get(tag, "#6c757d")
     emoji = ESG_EMOJIS.get(tag, "📰")
 
@@ -44,6 +43,9 @@ def render_article_card(article: dict) -> str:
         titulo = titulo[:67] + "..."
     link = article.get("link", "#")
     full_title = article.get("titulo", "").replace('"', "&quot;")
+    fonte = article.get("fonte") or ""
+    if fonte and len(fonte) > 30:
+        fonte = fonte[:28] + "…"
 
     badge = _bank_badge(banco_tag, bank_color)
 
@@ -51,6 +53,10 @@ def render_article_card(article: dict) -> str:
         '<span style="font-size:0.55rem;background:rgba(46,125,50,0.2);color:#4caf50;'
         'border-radius:3px;padding:1px 4px;margin-left:4px;">AI✓</span>'
         if article.get("ai_verified") else ""
+    )
+
+    fonte_html = (
+        f'<div class="card-fonte">{fonte}</div>' if fonte else ""
     )
 
     return (
@@ -64,20 +70,25 @@ def render_article_card(article: dict) -> str:
         f'{ai_badge}'
         f'</div>'
         f'<div><a href="{link}" target="_blank" title="{full_title}">{titulo}</a></div>'
+        f'{fonte_html}'
         f'</div>'
     )
 
 
-def render_calendar(articles: list[dict], start: date, end: date = None) -> None:  # noqa: ARG001
+def render_calendar(articles: list[dict], start: date, end: date = None) -> None:
     by_date: dict[date, list[dict]] = defaultdict(list)
+    today = date.today()
+
     for a in articles:
         d = a.get("data")
         if isinstance(d, str):
-            d = date.fromisoformat(d)
-        if d:
+            try:
+                d = date.fromisoformat(d)
+            except ValueError:
+                continue
+        if d and d != today or d == today:
             by_date[d].append(a)
 
-    today = date.today()
     grid = build_month_grid(start.year, start.month)
 
     header_cols = st.columns(7)
@@ -92,14 +103,27 @@ def render_calendar(articles: list[dict], start: date, end: date = None) -> None
         for i, day in enumerate(week):
             with cols[i]:
                 if day is None:
-                    st.markdown('<div class="calendar-cell"></div>', unsafe_allow_html=True)
+                    st.markdown('<div class="calendar-cell empty-cell"></div>', unsafe_allow_html=True)
                     continue
 
                 is_today = day == today
-                num_class = "day-number today" if is_today else "day-number"
+                is_future = day > today
                 day_articles = by_date.get(day, [])
 
-                html = f'<div class="calendar-cell"><div class="{num_class}">{day.day}</div>'
+                if is_today:
+                    num_class = "day-number today"
+                elif is_future:
+                    num_class = "day-number future"
+                else:
+                    num_class = "day-number"
+
+                cell_class = "calendar-cell"
+                if is_future:
+                    cell_class += " future-cell"
+                elif not day_articles:
+                    cell_class += " empty-day"
+
+                html = f'<div class="{cell_class}"><div class="{num_class}">{day.day}</div>'
                 for article in day_articles:
                     html += render_article_card(article)
                 html += "</div>"
@@ -108,7 +132,6 @@ def render_calendar(articles: list[dict], start: date, end: date = None) -> None
 
     if not articles:
         st.markdown(
-            '<div class="no-data">Nenhuma notícia encontrada para os filtros selecionados.<br>'
-            'Tente rodar o scraper: <code>python -m scraper.pipeline</code></div>',
+            '<div class="no-data">Nenhuma notícia encontrada para os filtros selecionados.</div>',
             unsafe_allow_html=True,
         )
