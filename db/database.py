@@ -190,3 +190,20 @@ def get_date_range(conn: sqlite3.Connection) -> tuple[date, date]:
 
 def count_articles(conn: sqlite3.Connection) -> int:
     return conn.execute("SELECT COUNT(*) FROM news").fetchone()[0]
+
+
+def count_by_bank(
+    conn: sqlite3.Connection,
+    start_date: date,
+    end_date: date,
+    esg_tags: list[str] | None = None,
+) -> dict[str, int]:
+    sql = "SELECT banco_tag, COUNT(*) FROM news WHERE data BETWEEN ? AND ? AND is_fake_flag = 0"
+    params: list = [str(start_date), str(end_date)]
+    if esg_tags:
+        placeholders = ",".join("?" * len(esg_tags))
+        sql += f" AND esg_tag IN ({placeholders})"
+        params.extend(esg_tags)
+    sql += " GROUP BY banco_tag"
+    rows = conn.execute(sql, params).fetchall()
+    return {row[0]: row[1] for row in rows}
