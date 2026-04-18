@@ -37,11 +37,25 @@ def render_month_nav() -> tuple[date, date]:
             st.rerun()
 
     with col_label:
-        st.markdown(
-            f'<div style="text-align:center;font-size:1.25rem;font-weight:700;padding:4px 0;">'
-            f'{months_pt[month - 1]} {year}</div>',
-            unsafe_allow_html=True,
-        )
+        with st.popover(
+            f"{months_pt[month - 1]} {year}",
+            use_container_width=True,
+        ):
+            st.markdown("**Ir para mês/ano**")
+            available_years = list(range(today.year, today.year + 1))
+            sel_year = st.selectbox("Ano", available_years, index=0, key="pop_year")
+            max_month = today.month if sel_year == today.year else 12
+            sel_month = st.selectbox(
+                "Mês",
+                list(range(1, max_month + 1)),
+                format_func=lambda m: months_pt[m - 1],
+                index=max_month - 1,
+                key="pop_month",
+            )
+            if st.button("Ir", use_container_width=True, key="pop_go"):
+                st.session_state.nav_year = sel_year
+                st.session_state.nav_month = sel_month
+                st.rerun()
 
     with col_next:
         if st.button("▶", disabled=at_max, use_container_width=True, key="nav_next"):
