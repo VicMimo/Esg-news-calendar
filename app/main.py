@@ -6,7 +6,7 @@ import streamlit as st
 from datetime import date
 
 from app.calendar_view import render_calendar
-from app.components import render_sidebar_filters, render_search_bar
+from app.components import render_sidebar_filters, render_search_bar, render_month_nav
 from db.database import get_connection, query_articles, initialize_db, count_articles, count_by_bank
 from config.settings import DB_PATH
 
@@ -40,8 +40,10 @@ def main():
 
     st.sidebar.metric("Total de notícias", total)
 
+    selected_banks, selected_esg = render_sidebar_filters()
+
     search_query = render_search_bar()
-    selected_banks, selected_esg, (month_start, month_end) = render_sidebar_filters()
+    month_start, month_end = render_month_nav()
 
     from config.settings import BANK_DISPLAY_NAMES, BANK_COLORS
     with get_connection(DB_PATH) as conn:
@@ -90,14 +92,8 @@ def main():
             or search_query in (a.get("resumo") or "").lower()
         ]
 
-    months_pt = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-    ]
-    label = f"{months_pt[month_start.month - 1]} {month_start.year} — {len(articles)} notícias"
     if search_query:
-        label += f' · busca: "{search_query}"'
-    st.subheader(label)
+        st.caption(f'Busca: "{search_query}" — {len(articles)} resultado{"s" if len(articles) != 1 else ""}')
 
     render_calendar(articles, month_start, month_end)
 

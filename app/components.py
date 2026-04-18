@@ -13,7 +13,61 @@ def render_search_bar() -> str:
     ).strip().lower()
 
 
-def render_sidebar_filters() -> tuple[list[str], list[str], tuple[date, date]]:
+def render_month_nav() -> tuple[date, date]:
+    today = date.today()
+
+    if "nav_year" not in st.session_state:
+        st.session_state.nav_year = today.year
+    if "nav_month" not in st.session_state:
+        st.session_state.nav_month = today.month
+
+    months_pt = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+    ]
+
+    year = st.session_state.nav_year
+    month = st.session_state.nav_month
+
+    # Limits: Jan of current year ↔ current month
+    at_min = (year == today.year and month == 1)
+    at_max = (year == today.year and month == today.month)
+
+    col_prev, col_label, col_next = st.columns([1, 4, 1])
+
+    with col_prev:
+        if st.button("◀", disabled=at_min, use_container_width=True, key="nav_prev"):
+            if month == 1:
+                st.session_state.nav_month = 12
+                st.session_state.nav_year = year - 1
+            else:
+                st.session_state.nav_month = month - 1
+            st.rerun()
+
+    with col_label:
+        st.markdown(
+            f'<div style="text-align:center;font-size:1.25rem;font-weight:700;padding:4px 0;">'
+            f'{months_pt[month - 1]} {year}</div>',
+            unsafe_allow_html=True,
+        )
+
+    with col_next:
+        if st.button("▶", disabled=at_max, use_container_width=True, key="nav_next"):
+            if month == 12:
+                st.session_state.nav_month = 1
+                st.session_state.nav_year = year + 1
+            else:
+                st.session_state.nav_month = month + 1
+            st.rerun()
+
+    month_start = date(year, month, 1)
+    last_day = monthrange(year, month)[1]
+    month_end = date(year, month, last_day)
+
+    return month_start, month_end
+
+
+def render_sidebar_filters() -> tuple[list[str], list[str]]:
     st.sidebar.title("Filtros")
 
     all_banks = list(BANK_DISPLAY_NAMES.keys())
@@ -40,29 +94,4 @@ def render_sidebar_filters() -> tuple[list[str], list[str], tuple[date, date]]:
         if checked:
             selected_esg.append(tag)
 
-    st.sidebar.markdown("---")
-
-    current = date.today()
-    current_year = current.year
-
-    months_pt = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-    ]
-
-    # Meses disponíveis: janeiro até mês atual
-    available_months = list(range(1, current.month + 1))
-
-    selected_year = st.sidebar.selectbox("Ano", [current_year], index=0)
-    selected_month_idx = st.sidebar.selectbox(
-        "Mês",
-        options=available_months,
-        format_func=lambda m: months_pt[m - 1],
-        index=len(available_months) - 1,
-    )
-
-    month_start = date(selected_year, selected_month_idx, 1)
-    last_day = monthrange(selected_year, selected_month_idx)[1]
-    month_end = date(selected_year, selected_month_idx, last_day)
-
-    return selected_banks, selected_esg, (month_start, month_end)
+    return selected_banks, selected_esg
