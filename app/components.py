@@ -182,16 +182,35 @@ def render_trend_chart(monthly_counts: list[dict]) -> None:
         rows.append({"mes": label, "Ambiental": m.get("E", 0),
                      "Social": m.get("S", 0), "Governança": m.get("G", 0)})
 
-    df = pd.DataFrame(rows).set_index("mes")
+    df = pd.DataFrame(rows)
+    month_order = df["mes"].tolist()  # ordem cronológica já garantida acima
+
     try:
-        st.bar_chart(
-            df,
-            color=["#2ecc71", "#3498db", "#9b59b6"],
-            height=300,
-            stack=False,
+        import altair as alt
+        long = df.melt(id_vars="mes", var_name="Categoria", value_name="Notícias")
+        chart = (
+            alt.Chart(long)
+            .mark_bar()
+            .encode(
+                x=alt.X("mes:N", title=None, sort=month_order,
+                        axis=alt.Axis(labelAngle=0)),
+                xOffset=alt.XOffset("Categoria:N"),
+                y=alt.Y("Notícias:Q", title=None),
+                color=alt.Color(
+                    "Categoria:N",
+                    scale=alt.Scale(
+                        domain=["Ambiental", "Social", "Governança"],
+                        range=["#2ecc71", "#3498db", "#9b59b6"],
+                    ),
+                    legend=alt.Legend(orient="bottom", title=None),
+                ),
+                tooltip=["mes", "Categoria", "Notícias"],
+            )
+            .properties(height=300)
         )
+        st.altair_chart(chart, use_container_width=True)
     except Exception:
-        _render_trend_html(df)
+        _render_trend_html(df.set_index("mes"))
 
 
 def _render_trend_html(df) -> None:
