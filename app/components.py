@@ -150,4 +150,35 @@ def render_trend_chart(monthly_counts: list[dict]) -> None:
 
     import pandas as pd
     df = pd.DataFrame(chart_data).set_index("month")
-    st.line_chart(df, color=["#2ecc71", "#3498db", "#9b59b6"], height=260)
+    try:
+        st.line_chart(df, color=["#2ecc71", "#3498db", "#9b59b6"], height=260)
+    except Exception:
+        # Fallback para ambientes sem Altair (ex: Python 3.14 com altair quebrado)
+        _render_trend_html(df)
+
+
+def _render_trend_html(df) -> None:
+    """Renderização manual em HTML quando st.line_chart falha."""
+    max_val = max(df.values.max(), 1)
+    rows_html = []
+    colors = {"Ambiental": "#2ecc71", "Social": "#3498db", "Governança": "#9b59b6"}
+    for col in df.columns:
+        bars = []
+        for idx, val in zip(df.index, df[col]):
+            pct = int(val / max_val * 100)
+            bars.append(
+                f'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
+                f'<div style="width:100%;height:80px;display:flex;align-items:flex-end;">'
+                f'<div style="width:100%;height:{pct}%;background:{colors[col]};border-radius:3px 3px 0 0;"></div>'
+                f'</div>'
+                f'<div style="font-size:0.7rem;opacity:0.7;">{idx}</div>'
+                f'<div style="font-size:0.75rem;font-weight:700;">{val}</div>'
+                f'</div>'
+            )
+        rows_html.append(
+            f'<div style="margin-bottom:16px;">'
+            f'<div style="font-weight:600;color:{colors[col]};margin-bottom:6px;">{col}</div>'
+            f'<div style="display:flex;gap:8px;align-items:flex-end;">{"".join(bars)}</div>'
+            f'</div>'
+        )
+    st.markdown("".join(rows_html), unsafe_allow_html=True)
