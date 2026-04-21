@@ -7,26 +7,38 @@ BANK_QUERIES = {
     "itau": [
         "Itaú ESG", "Itaú sustentabilidade", "Itaú BBA sustentabilidade",
         "Itaú verde", "Itaú net zero", "Itaú Unibanco ESG",
+        "Itaú título verde", "Itaú diversidade racial", "Itaú inclusão financeira",
+        "Itaú crédito de carbono",
     ],
     "bradesco": [
         "Bradesco ESG", "Bradesco sustentabilidade", "Bradesco social",
         "Bradesco verde", "Bradesco Next ESG",
+        "Bradesco título verde", "Bradesco diversidade", "Bradesco inclusão financeira",
+        "Bradesco descarbonização",
     ],
     "santander": [
         "Santander ESG", "Santander títulos verdes",
         "Santander sustentável", "Santander sustentabilidade",
+        "Santander diversidade", "Santander financiamento verde",
+        "Santander inclusão financeira", "Santander agro sustentável",
     ],
     "bb": [
         "Banco do Brasil ESG", "BB sustentabilidade",
         "Banco do Brasil verde", "Banco do Brasil ambiental",
+        "Banco do Brasil Pronaf", "Banco do Brasil agro sustentável",
+        "Banco do Brasil diversidade", "BB título verde",
     ],
     "caixa": [
         "Caixa ESG", "Caixa sustentabilidade",
         "Caixa habitação social", "Caixa verde",
+        "Caixa Minha Casa Minha Vida", "Caixa crédito habitacional social",
+        "Caixa inclusão financeira",
     ],
     "btg": [
         "BTG ESG", "BTG Pactual sustentabilidade",
         "BTG verde", "BTG Pactual ambiental",
+        "BTG Pactual diversidade", "BTG título verde",
+        "BTG crédito de carbono",
     ],
     "nubank": [
         "Nubank ESG", "Nubank sustentabilidade",

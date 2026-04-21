@@ -25,7 +25,7 @@ def run_pipeline(
     from config.settings import DB_PATH, BANK_QUERIES, TRUSTED_DOMAINS
     from db.database import initialize_db, insert_article, get_connection, count_articles
     from scraper.fetcher import fetch_all_banks
-    from scraper.classifier import classify_esg
+    from scraper.classifier import classify_esg, is_noise
     from scraper.dedup import compute_title_hash
     from scraper.ai_classifier import verify_and_classify, is_ai_available
     from scraper.models import ClassifiedArticle
@@ -61,7 +61,12 @@ def run_pipeline(
                     summary["total_skipped"] += 1
                     continue
                 try:
-                    keyword_tag = classify_esg(f"{raw.get('titulo', '')} {raw.get('resumo', '') or ''}")
+                    full_text = f"{raw.get('titulo', '')} {raw.get('resumo', '') or ''}"
+                    if is_noise(full_text):
+                        summary["total_skipped"] += 1
+                        logger.debug(f"[SKIP BLACKLIST] {raw['titulo'][:60]}")
+                        continue
+                    keyword_tag = classify_esg(full_text)
                     title_hash = compute_title_hash(raw["titulo"], raw["data"])
 
                     # Deduplicação cross-banco: mesma notícia não entra para dois bancos
