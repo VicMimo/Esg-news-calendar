@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import date
 from calendar import monthrange
 
-from config.settings import BANK_DISPLAY_NAMES, BANK_COLORS, ESG_EMOJIS
+from config.settings import BANK_DISPLAY_NAMES, ESG_EMOJIS
 
 MONTHS_PT = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -122,6 +122,41 @@ def render_sidebar_filters() -> tuple[list[str], list[str]]:
             selected_esg.append(tag)
 
     return selected_banks, selected_esg
+
+
+def render_export_csv(articles: list[dict], filename: str = "esg_news.csv") -> None:
+    """Botão de download CSV das notícias filtradas."""
+    if not articles:
+        return
+    import io
+    import csv
+    from config.settings import BANK_DISPLAY_NAMES, ESG_LABELS
+
+    buf = io.StringIO()
+    writer = csv.DictWriter(
+        buf,
+        fieldnames=["data", "banco", "categoria", "titulo", "resumo", "fonte", "link"],
+        quoting=csv.QUOTE_ALL,
+    )
+    writer.writeheader()
+    for a in articles:
+        writer.writerow({
+            "data": a.get("data", ""),
+            "banco": BANK_DISPLAY_NAMES.get(a.get("banco_tag", ""), a.get("banco_tag", "")),
+            "categoria": ESG_LABELS.get(a.get("esg_tag", ""), a.get("esg_tag", "")),
+            "titulo": a.get("titulo", ""),
+            "resumo": a.get("resumo", "") or "",
+            "fonte": a.get("fonte", "") or "",
+            "link": a.get("link", ""),
+        })
+    csv_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")  # BOM para Excel abrir com acentos
+    st.sidebar.download_button(
+        label="📥 Exportar CSV",
+        data=csv_bytes,
+        file_name=filename,
+        mime="text/csv",
+        use_container_width=True,
+    )
 
 
 def render_trend_chart(monthly_counts: list[dict], window: int = 4) -> None:

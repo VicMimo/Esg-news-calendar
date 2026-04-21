@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import streamlit as st
 
 from app.calendar_view import render_calendar
-from app.components import render_sidebar_filters, render_month_nav, render_trend_chart
+from app.components import render_sidebar_filters, render_month_nav, render_trend_chart, render_export_csv
 from db.database import get_connection, query_articles, initialize_db, count_articles, count_by_bank, count_by_month_esg
 from config.settings import DB_PATH, BANK_DISPLAY_NAMES, BANK_COLORS
 
@@ -98,6 +98,10 @@ def main():
                 banks=selected_banks if selected_banks else None,
             )
 
+    render_export_csv(
+        articles,
+        filename=f"esg_news_{month_start:%Y-%m}.csv",
+    )
     render_calendar(articles, month_start, month_end)
     render_trend_chart(monthly)
 
