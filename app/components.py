@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import date
 from calendar import monthrange
 
-from config.settings import BANK_DISPLAY_NAMES, ESG_EMOJIS
+from config.settings import BANK_DISPLAY_NAMES, BANK_COLORS, ESG_EMOJIS
 
 MONTHS_PT = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -122,6 +122,42 @@ def render_sidebar_filters() -> tuple[list[str], list[str]]:
             selected_esg.append(tag)
 
     return selected_banks, selected_esg
+
+
+def render_ranking(bank_counts: dict[str, int], top_n: int = 3) -> None:
+    """Podium com os top N bancos mais ativos no período."""
+    ranked = sorted(bank_counts.items(), key=lambda x: -x[1])[:top_n]
+    ranked = [(b, n) for b, n in ranked if n > 0]
+    if not ranked:
+        return
+
+    st.markdown("### 🏆 Ranking do período")
+    medals = ["🥇", "🥈", "🥉"]
+    max_val = ranked[0][1] or 1
+
+    cards = []
+    for i, (bank, count) in enumerate(ranked):
+        color = BANK_COLORS.get(bank, "#6c757d")
+        name = BANK_DISPLAY_NAMES.get(bank, bank)
+        medal = medals[i] if i < len(medals) else f"{i + 1}º"
+        pct = int(count / max_val * 100)
+        cards.append(
+            f'<div style="flex:1;background:color-mix(in srgb, {color} 8%, transparent);'
+            f'border-left:4px solid {color};border-radius:8px;padding:14px 16px;">'
+            f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+            f'<span style="font-size:1.3rem;">{medal}</span>'
+            f'<span style="font-size:1.6rem;font-weight:800;color:{color};">{count}</span>'
+            f'</div>'
+            f'<div style="font-weight:600;margin-bottom:6px;">{name}</div>'
+            f'<div style="height:5px;background:color-mix(in srgb, {color} 15%, transparent);border-radius:3px;overflow:hidden;">'
+            f'<div style="width:{pct}%;height:100%;background:{color};"></div>'
+            f'</div>'
+            f'</div>'
+        )
+    st.markdown(
+        f'<div style="display:flex;gap:12px;margin-bottom:16px;">{"".join(cards)}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def render_trend_chart(monthly_counts: list[dict]) -> None:
