@@ -124,13 +124,15 @@ def render_sidebar_filters() -> tuple[list[str], list[str]]:
     return selected_banks, selected_esg
 
 
-def render_export_csv(articles: list[dict], filename: str = "esg_news.csv") -> None:
-    """Botão de download CSV das notícias filtradas — formatado para Excel BR."""
+def render_export_csv(articles: list[dict], filename: str = "esg_news.xlsx") -> None:
+    """Botão de download XLSX das notícias filtradas — formatado para Excel."""
     if not articles:
         return
     import io
-    import csv
     from datetime import date as _date
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
     from config.settings import BANK_DISPLAY_NAMES, ESG_LABELS
 
     def _fmt_date(v) -> str:
@@ -146,19 +148,28 @@ def render_export_csv(articles: list[dict], filename: str = "esg_news.csv") -> N
     def _clean(v) -> str:
         if v is None:
             return ""
-        # Remove quebras de linha para não quebrar a célula do Excel
         return str(v).replace("\r", " ").replace("\n", " ").strip()
 
-    buf = io.StringIO()
-    writer = csv.writer(
-        buf,
-        delimiter=";",              # Excel BR espera ponto-e-vírgula
-        quoting=csv.QUOTE_ALL,
-        lineterminator="\r\n",
-    )
-    writer.writerow(["Data", "Banco", "Categoria ESG", "Título", "Resumo", "Fonte", "Link"])
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Notícias ESG"
+
+    headers = ["Data", "Banco", "Categoria ESG", "Título", "Resumo", "Fonte", "Link"]
+    widths = [12, 18, 15, 55, 65, 22, 30]
+
+    header_fill = PatternFill("solid", fgColor="1E5631")
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    for col_idx, (h, w) in enumerate(zip(headers, widths), start=1):
+        cell = ws.cell(row=1, column=col_idx, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        ws.column_dimensions[get_column_letter(col_idx)].width = w
+    ws.row_dimensions[1].height = 24
+
+    wrap = Alignment(wrap_text=True, vertical="top")
     for a in articles:
-        writer.writerow([
+        row = [
             _fmt_date(a.get("data")),
             BANK_DISPLAY_NAMES.get(a.get("banco_tag", ""), a.get("banco_tag", "")),
             ESG_LABELS.get(a.get("esg_tag", ""), a.get("esg_tag", "")),
@@ -166,14 +177,30 @@ def render_export_csv(articles: list[dict], filename: str = "esg_news.csv") -> N
             _clean(a.get("resumo")),
             _clean(a.get("fonte")),
             _clean(a.get("link")),
-        ])
-    # BOM UTF-8 para Excel reconhecer acentos
-    csv_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
+        ]
+        r = ws.max_row + 1
+        for col_idx, val in enumerate(row, start=1):
+            cell = ws.cell(row=r, column=col_idx, value=val)
+            cell.alignment = wrap
+        # Link clicável
+        link_cell = ws.cell(row=r, column=7)
+        if link_cell.value:
+            link_cell.hyperlink = link_cell.value
+            link_cell.font = Font(color="0563C1", underline="single")
+            link_cell.value = "Abrir notícia"
+
+    # Congela a primeira linha
+    ws.freeze_panes = "A2"
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
     st.sidebar.download_button(
-        label="📥 Exportar CSV",
-        data=csv_bytes,
+        label="📥 Exportar Excel",
+        data=buf.getvalue(),
         file_name=filename,
-        mime="text/csv",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
     )
 

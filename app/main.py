@@ -100,7 +100,7 @@ def main():
 
     render_export_csv(
         articles,
-        filename=f"esg_news_{month_start:%Y-%m}.csv",
+        filename=f"esg_news_{month_start:%Y-%m}.xlsx",
     )
     render_calendar(articles, month_start, month_end)
     render_trend_chart(monthly)
