@@ -67,6 +67,10 @@ def run_pipeline(
                         logger.debug(f"[SKIP BLACKLIST] {raw['titulo'][:60]}")
                         continue
                     keyword_tag = classify_esg(full_text)
+                    if keyword_tag == "unknown":
+                        summary["total_skipped"] += 1
+                        logger.debug(f"[SKIP NO-ESG-KEYWORD] {raw['titulo'][:60]}")
+                        continue
                     title_hash = compute_title_hash(raw["titulo"], raw["data"])
 
                     # Deduplicação cross-banco: mesma notícia não entra para dois bancos
