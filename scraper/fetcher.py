@@ -11,10 +11,20 @@ logger = logging.getLogger(__name__)
 
 _USER_AGENT = "Mozilla/5.0 (compatible; ESGNewsBot/1.0)"
 
+# Domínios bloqueados — sobrepõem qualquer whitelist (ruído editorial/vagas/opinião)
+_BLOCKED_DOMAINS = {
+    "conteudos.xpi.com.br",  # blog editorial da XP, fala do mercado e não da XP
+    "carreiras.itau.com.br",  # vagas de emprego
+    "carreiras.bradesco.com.br",
+    "carreiras.santander.com.br",
+    "vagas.bb.com.br",
+}
+
 # Títulos que contenham qualquer um desses termos são descartados como ruído
 _NOISE_TERMS = [
     "portal salário", "salário", "vaga de emprego", "operador de caixa",
-    "auxiliar", "assistente", "analista junior", "trainee", "estágio",
+    "auxiliar", "assistente", "analista junior", "analista júnior",
+    "trainee", "estágio", "estagiário", "jovem aprendiz",
     "recrutamento", "processo seletivo", "currículo", "indeed.com",
     "catho", "infojobs", "linkedin vagas", "glassdoor",
     # Safra agrícola (não banco)
@@ -57,6 +67,9 @@ def is_trusted_source(fonte: str | None, trusted_domains: set) -> bool:
     fonte = fonte.lower().removeprefix("www.")
     # Rejeita explicitamente agregadores/redirecionadores
     if fonte in ("news.google.com", "google.com", "yahoo.com", "bing.com"):
+        return False
+    # Blocklist de subdomínios tem precedência sobre whitelist
+    if fonte in _BLOCKED_DOMAINS:
         return False
     parts = fonte.split(".")
     for i in range(len(parts)):
