@@ -43,66 +43,87 @@ BANK_QUERIES = {
     "nubank": [
         "Nubank ESG", "Nubank sustentabilidade",
         "Nubank social", "Nubank impacto",
+        "Nubank diversidade", "Nubank inclusão financeira",
+        "Nubank relatório ESG",
     ],
     "safra": [
         "Banco Safra ESG", "Banco Safra sustentabilidade",
         "Banco Safra verde", "Banco Safra ambiental",
-        "Banco Safra social",
+        "Banco Safra social", "Banco Safra diversidade",
+        "Banco Safra título verde",
     ],
     "xp": [
         "XP Inc ESG", "XP Inc sustentabilidade",
         "XP Investimentos governança", "XP Investimentos diversidade",
         "XP Inc diversidade", "XP Inc relatório ESG",
+        "XP Inc inclusão financeira",
     ],
     "inter": [
         "Banco Inter ESG", "Inter sustentabilidade",
         "Inter social", "Inter verde",
+        "Banco Inter diversidade", "Banco Inter inclusão financeira",
+        "Banco Inter relatório ESG",
     ],
     "c6": [
         "C6 Bank ESG", "C6 Bank sustentabilidade",
         "C6 Bank social", "C6 Bank verde",
+        "C6 Bank diversidade", "C6 Bank inclusão financeira",
+        "C6 Bank neutralidade carbono",
     ],
     "sicoob": [
         "Sicoob ESG", "Sicoob sustentabilidade",
         "Sicoob social", "Sicoob cooperativa verde",
+        "Sicoob Pronaf", "Sicoob agro sustentável",
+        "Sicoob inclusão financeira",
     ],
     "bnb": [
         "Banco do Nordeste ESG", "Banco do Nordeste sustentabilidade",
         "Banco do Nordeste social", "BNB verde", "BNB ambiental",
         "Banco do Nordeste meio ambiente",
+        "Banco do Nordeste FNE Verde", "Banco do Nordeste semiárido",
+        "Banco do Nordeste microcrédito",
     ],
     "brb": [
         "BRB ESG", "BRB sustentabilidade", "Banco de Brasília ESG",
         "BRB verde", "BRB social",
+        "BRB diversidade", "BRB inclusão financeira",
     ],
     "original": [
         "Banco Original ESG", "Banco Original sustentabilidade",
         "Banco Original verde", "Banco Original social",
+        "Banco Original diversidade", "Banco Original agro sustentável",
     ],
     "pan": [
         "Banco Pan ESG", "Banco Pan sustentabilidade",
         "Banco Pan social", "Banco Pan inclusão financeira",
+        "Banco Pan diversidade", "Banco Pan microcrédito",
     ],
     "bmg": [
         "Banco BMG ESG", "Banco BMG sustentabilidade",
         "Banco BMG social", "BMG inclusão",
+        "Banco BMG diversidade", "Banco BMG verde",
     ],
     "agibank": [
         "Agibank ESG", "Agibank sustentabilidade",
         "Agibank social", "Agibank inclusão financeira",
+        "Agibank diversidade", "Agibank microcrédito",
     ],
     "picpay": [
         "PicPay Bank ESG", "PicPay sustentabilidade",
         "PicPay social", "PicPay impacto", "PicPay inclusão",
+        "PicPay diversidade", "PicPay inclusão financeira",
     ],
     "bs2": [
         "Banco BS2 ESG", "BS2 sustentabilidade",
         "BS2 social", "BS2 verde",
+        "BS2 diversidade", "BS2 título verde",
     ],
     "bv": [
         "Banco BV ESG", "Banco BV sustentabilidade",
         "Banco Votorantim ESG", "BV financiamentos verdes",
         "Banco BV verde", "Banco BV social",
+        "Banco BV diversidade", "Banco BV veículo elétrico",
+        "Banco BV energia solar",
     ],
 }
 
