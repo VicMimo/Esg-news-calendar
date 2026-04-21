@@ -187,8 +187,8 @@ def render_trend_chart(monthly_counts: list[dict]) -> None:
         st.bar_chart(
             df,
             color=["#2ecc71", "#3498db", "#9b59b6"],
-            height=280,
-            stack=True,
+            height=300,
+            stack=False,
         )
     except Exception:
         _render_trend_html(df)
