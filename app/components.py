@@ -205,16 +205,13 @@ def render_export_csv(articles: list[dict], filename: str = "esg_news.xlsx") -> 
     )
 
 
-def render_trend_chart(monthly_counts: list[dict], window: int = 4) -> None:
-    """Renderiza grouped bar chart com evolução E/S/G — paginado em janelas de N meses."""
-    if not monthly_counts:
-        st.caption("Sem dados suficientes para o gráfico de tendência.")
-        return
+_COLOR_DOMAIN = ["Ambiental", "Social", "Governança"]
+_COLOR_RANGE = ["#2ecc71", "#3498db", "#9b59b6"]
 
-    # Ordena cronologicamente pelo mês (formato YYYY-MM garante ordem lexicográfica)
-    ordered = sorted(monthly_counts, key=lambda m: m["month"])
 
+def _build_trend_df(monthly_counts: list[dict]):
     import pandas as pd
+    ordered = sorted(monthly_counts, key=lambda m: m["month"])
     rows = []
     for m in ordered:
         try:
@@ -222,23 +219,51 @@ def render_trend_chart(monthly_counts: list[dict], window: int = 4) -> None:
             label = f"{MONTHS_PT[int(mo) - 1][:3]}/{y[2:]}"
         except Exception:
             label = m["month"]
-        rows.append({"mes": label, "Ambiental": m.get("E", 0),
-                     "Social": m.get("S", 0), "Governança": m.get("G", 0)})
+        rows.append({
+            "mes": label,
+            "Ambiental": m.get("E", 0),
+            "Social": m.get("S", 0),
+            "Governança": m.get("G", 0),
+        })
+    return pd.DataFrame(rows)
 
-    total = len(rows)
-    n_pages = max(1, (total + window - 1) // window)
 
-    # Página mais recente por default (última janela)
-    if "trend_page" not in st.session_state:
-        st.session_state.trend_page = n_pages - 1
-    # Clamp se dados mudaram
-    st.session_state.trend_page = max(0, min(st.session_state.trend_page, n_pages - 1))
+def render_trend_chart(monthly_counts: list[dict], window: int = 4) -> None:
+    """Tendência ESG com dois modos: histograma (paginado) e linha do tempo (consolidado)."""
+    if not monthly_counts:
+        st.caption("Sem dados suficientes para o gráfico de tendência.")
+        return
 
-    page = st.session_state.trend_page
+    df = _build_trend_df(monthly_counts)
 
-    col_title, col_prev, col_label, col_next = st.columns([6, 1, 2, 1])
+    col_title, col_mode = st.columns([6, 3])
     with col_title:
         st.markdown("### 📈 Tendência ESG")
+    with col_mode:
+        mode = st.radio(
+            "Visualização",
+            options=["Histograma", "Linha do tempo"],
+            horizontal=True,
+            label_visibility="collapsed",
+            key="trend_mode",
+        )
+
+    if mode == "Histograma":
+        _render_histogram(df, window)
+    else:
+        _render_timeline(df)
+
+
+def _render_histogram(df, window: int) -> None:
+    total = len(df)
+    n_pages = max(1, (total + window - 1) // window)
+
+    if "trend_page" not in st.session_state:
+        st.session_state.trend_page = n_pages - 1
+    st.session_state.trend_page = max(0, min(st.session_state.trend_page, n_pages - 1))
+    page = st.session_state.trend_page
+
+    col_prev, col_label, col_next = st.columns([1, 6, 1])
     with col_prev:
         if st.button("◀", key="trend_prev", disabled=(page == 0), use_container_width=True):
             st.session_state.trend_page -= 1
@@ -254,17 +279,12 @@ def render_trend_chart(monthly_counts: list[dict], window: int = 4) -> None:
             st.session_state.trend_page += 1
             st.rerun()
 
-    # Fatia a janela a exibir
-    start = page * window
-    end = start + window
-    window_rows = rows[start:end]
-
-    df = pd.DataFrame(window_rows)
-    month_order = df["mes"].tolist()
+    window_df = df.iloc[page * window:page * window + window]
+    month_order = window_df["mes"].tolist()
 
     try:
         import altair as alt
-        long = df.melt(id_vars="mes", var_name="Categoria", value_name="Notícias")
+        long = window_df.melt(id_vars="mes", var_name="Categoria", value_name="Notícias")
         chart = (
             alt.Chart(long)
             .mark_bar()
@@ -275,10 +295,7 @@ def render_trend_chart(monthly_counts: list[dict], window: int = 4) -> None:
                 y=alt.Y("Notícias:Q", title=None),
                 color=alt.Color(
                     "Categoria:N",
-                    scale=alt.Scale(
-                        domain=["Ambiental", "Social", "Governança"],
-                        range=["#2ecc71", "#3498db", "#9b59b6"],
-                    ),
+                    scale=alt.Scale(domain=_COLOR_DOMAIN, range=_COLOR_RANGE),
                     legend=alt.Legend(orient="bottom", title=None),
                 ),
                 tooltip=["mes", "Categoria", "Notícias"],
@@ -286,7 +303,34 @@ def render_trend_chart(monthly_counts: list[dict], window: int = 4) -> None:
             .properties(height=300)
             .configure_view(strokeWidth=0)
         )
-        # theme=None evita bindings de zoom/pan que o Streamlit adiciona
+        st.altair_chart(chart, use_container_width=True, theme=None)
+    except Exception:
+        _render_trend_html(window_df.set_index("mes"))
+
+
+def _render_timeline(df) -> None:
+    """Linha do tempo consolidada com todos os meses disponíveis."""
+    month_order = df["mes"].tolist()
+    try:
+        import altair as alt
+        long = df.melt(id_vars="mes", var_name="Categoria", value_name="Notícias")
+        chart = (
+            alt.Chart(long)
+            .mark_line(point=alt.OverlayMarkDef(size=60, filled=True))
+            .encode(
+                x=alt.X("mes:N", title=None, sort=month_order,
+                        axis=alt.Axis(labelAngle=0)),
+                y=alt.Y("Notícias:Q", title=None),
+                color=alt.Color(
+                    "Categoria:N",
+                    scale=alt.Scale(domain=_COLOR_DOMAIN, range=_COLOR_RANGE),
+                    legend=alt.Legend(orient="bottom", title=None),
+                ),
+                tooltip=["mes", "Categoria", "Notícias"],
+            )
+            .properties(height=320)
+            .configure_view(strokeWidth=0)
+        )
         st.altair_chart(chart, use_container_width=True, theme=None)
     except Exception:
         _render_trend_html(df.set_index("mes"))
