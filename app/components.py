@@ -207,8 +207,10 @@ def render_trend_chart(monthly_counts: list[dict]) -> None:
                 tooltip=["mes", "Categoria", "Notícias"],
             )
             .properties(height=300)
+            .configure_view(strokeWidth=0)
         )
-        st.altair_chart(chart, use_container_width=True)
+        # theme=None evita bindings de zoom/pan que o Streamlit adiciona
+        st.altair_chart(chart, use_container_width=True, theme=None)
     except Exception:
         _render_trend_html(df.set_index("mes"))
 
