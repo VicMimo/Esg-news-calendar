@@ -316,7 +316,11 @@ def _render_timeline(df) -> None:
         long = df.melt(id_vars="mes", var_name="Categoria", value_name="Notícias")
         chart = (
             alt.Chart(long)
-            .mark_line(point=alt.OverlayMarkDef(size=60, filled=True))
+            .mark_line(
+                point=alt.OverlayMarkDef(size=70, filled=True),
+                interpolate="monotone",
+                strokeWidth=3,
+            )
             .encode(
                 x=alt.X("mes:N", title=None, sort=month_order,
                         axis=alt.Axis(labelAngle=0)),
