@@ -94,7 +94,7 @@ def main():
             )
             monthly = count_by_month_esg(
                 conn,
-                months_back=6,
+                months_back=24,
                 banks=selected_banks if selected_banks else None,
             )
 

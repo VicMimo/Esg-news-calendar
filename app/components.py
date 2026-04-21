@@ -160,13 +160,11 @@ def render_ranking(bank_counts: dict[str, int], top_n: int = 3) -> None:
     )
 
 
-def render_trend_chart(monthly_counts: list[dict]) -> None:
-    """Renderiza bar chart empilhado com evolução E/S/G ao longo dos meses."""
+def render_trend_chart(monthly_counts: list[dict], window: int = 4) -> None:
+    """Renderiza grouped bar chart com evolução E/S/G — paginado em janelas de N meses."""
     if not monthly_counts:
         st.caption("Sem dados suficientes para o gráfico de tendência.")
         return
-
-    st.markdown("### 📈 Tendência ESG nos últimos meses")
 
     # Ordena cronologicamente pelo mês (formato YYYY-MM garante ordem lexicográfica)
     ordered = sorted(monthly_counts, key=lambda m: m["month"])
@@ -182,8 +180,42 @@ def render_trend_chart(monthly_counts: list[dict]) -> None:
         rows.append({"mes": label, "Ambiental": m.get("E", 0),
                      "Social": m.get("S", 0), "Governança": m.get("G", 0)})
 
-    df = pd.DataFrame(rows)
-    month_order = df["mes"].tolist()  # ordem cronológica já garantida acima
+    total = len(rows)
+    n_pages = max(1, (total + window - 1) // window)
+
+    # Página mais recente por default (última janela)
+    if "trend_page" not in st.session_state:
+        st.session_state.trend_page = n_pages - 1
+    # Clamp se dados mudaram
+    st.session_state.trend_page = max(0, min(st.session_state.trend_page, n_pages - 1))
+
+    page = st.session_state.trend_page
+
+    col_title, col_prev, col_label, col_next = st.columns([6, 1, 2, 1])
+    with col_title:
+        st.markdown("### 📈 Tendência ESG")
+    with col_prev:
+        if st.button("◀", key="trend_prev", disabled=(page == 0), use_container_width=True):
+            st.session_state.trend_page -= 1
+            st.rerun()
+    with col_label:
+        st.markdown(
+            f"<div style='text-align:center;padding-top:8px;font-size:0.85rem;opacity:0.75;'>"
+            f"Página {page + 1}/{n_pages}</div>",
+            unsafe_allow_html=True,
+        )
+    with col_next:
+        if st.button("▶", key="trend_next", disabled=(page == n_pages - 1), use_container_width=True):
+            st.session_state.trend_page += 1
+            st.rerun()
+
+    # Fatia a janela a exibir
+    start = page * window
+    end = start + window
+    window_rows = rows[start:end]
+
+    df = pd.DataFrame(window_rows)
+    month_order = df["mes"].tolist()
 
     try:
         import altair as alt
