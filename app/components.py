@@ -158,27 +158,41 @@ def render_trend_chart(monthly_counts: list[dict]) -> None:
 
 
 def _render_trend_html(df) -> None:
-    """Renderização manual em HTML quando st.line_chart falha."""
+    """Renderização manual quando st.line_chart falha — grouped bar chart."""
     max_val = max(df.values.max(), 1)
-    rows_html = []
     colors = {"Ambiental": "#2ecc71", "Social": "#3498db", "Governança": "#9b59b6"}
-    for col in df.columns:
+    BAR_MAX_HEIGHT = 120  # px
+
+    # Legenda
+    legend = " &nbsp;•&nbsp; ".join(
+        f'<span style="color:{c};font-weight:600;">● {name}</span>'
+        for name, c in colors.items()
+    )
+
+    # Grupos por mês, com 3 barras (E/S/G) lado a lado
+    groups = []
+    for idx in df.index:
         bars = []
-        for idx, val in zip(df.index, df[col]):
-            pct = int(val / max_val * 100)
+        for col in df.columns:
+            val = int(df.loc[idx, col])
+            h = int(val / max_val * BAR_MAX_HEIGHT) if val > 0 else 2
             bars.append(
-                f'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
-                f'<div style="width:100%;height:80px;display:flex;align-items:flex-end;">'
-                f'<div style="width:100%;height:{pct}%;background:{colors[col]};border-radius:3px 3px 0 0;"></div>'
-                f'</div>'
-                f'<div style="font-size:0.7rem;opacity:0.7;">{idx}</div>'
-                f'<div style="font-size:0.75rem;font-weight:700;">{val}</div>'
+                f'<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">'
+                f'<div style="font-size:0.7rem;font-weight:700;color:{colors[col]};">{val}</div>'
+                f'<div style="width:22px;height:{h}px;background:{colors[col]};border-radius:3px 3px 0 0;"></div>'
                 f'</div>'
             )
-        rows_html.append(
-            f'<div style="margin-bottom:16px;">'
-            f'<div style="font-weight:600;color:{colors[col]};margin-bottom:6px;">{col}</div>'
-            f'<div style="display:flex;gap:8px;align-items:flex-end;">{"".join(bars)}</div>'
+        groups.append(
+            f'<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">'
+            f'<div style="display:flex;gap:6px;align-items:flex-end;height:{BAR_MAX_HEIGHT + 20}px;">{"".join(bars)}</div>'
+            f'<div style="font-size:0.75rem;opacity:0.75;font-weight:500;">{idx}</div>'
             f'</div>'
         )
-    st.markdown("".join(rows_html), unsafe_allow_html=True)
+
+    html = (
+        f'<div style="margin-bottom:8px;font-size:0.8rem;">{legend}</div>'
+        f'<div style="display:flex;gap:16px;align-items:flex-end;padding:8px 0 16px 0;">'
+        f'{"".join(groups)}'
+        f'</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
