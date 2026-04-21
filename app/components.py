@@ -122,3 +122,32 @@ def render_sidebar_filters() -> tuple[list[str], list[str]]:
             selected_esg.append(tag)
 
     return selected_banks, selected_esg
+
+
+def render_trend_chart(monthly_counts: list[dict]) -> None:
+    """Renderiza um line chart com evolução E/S/G ao longo dos meses."""
+    if not monthly_counts:
+        st.caption("Sem dados suficientes para o gráfico de tendência.")
+        return
+
+    st.markdown("### 📈 Tendência ESG nos últimos meses")
+    chart_data = {
+        "month": [],
+        "Ambiental": [],
+        "Social": [],
+        "Governança": [],
+    }
+    for m in monthly_counts:
+        try:
+            y, mo = m["month"].split("-")
+            label = f"{MONTHS_PT[int(mo) - 1][:3]}/{y[2:]}"
+        except Exception:
+            label = m["month"]
+        chart_data["month"].append(label)
+        chart_data["Ambiental"].append(m.get("E", 0))
+        chart_data["Social"].append(m.get("S", 0))
+        chart_data["Governança"].append(m.get("G", 0))
+
+    import pandas as pd
+    df = pd.DataFrame(chart_data).set_index("month")
+    st.line_chart(df, color=["#2ecc71", "#3498db", "#9b59b6"], height=260)

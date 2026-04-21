@@ -5,8 +5,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import streamlit as st
 
 from app.calendar_view import render_calendar
-from app.components import render_sidebar_filters, render_month_nav, MONTHS_PT
-from db.database import get_connection, query_articles, initialize_db, count_articles, count_by_bank
+from app.components import render_sidebar_filters, render_month_nav, render_trend_chart, MONTHS_PT
+from db.database import get_connection, query_articles, initialize_db, count_articles, count_by_bank, count_by_month_esg
 from config.settings import DB_PATH, BANK_DISPLAY_NAMES, BANK_COLORS
 
 st.set_page_config(
@@ -92,8 +92,14 @@ def main():
                 banks=selected_banks if selected_banks else None,
                 esg_tags=selected_esg if selected_esg else None,
             )
+            monthly = count_by_month_esg(
+                conn,
+                months_back=6,
+                banks=selected_banks if selected_banks else None,
+            )
 
     render_calendar(articles, month_start, month_end)
+    render_trend_chart(monthly)
 
 
 if __name__ == "__main__":

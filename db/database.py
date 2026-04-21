@@ -192,6 +192,35 @@ def count_articles(conn: sqlite3.Connection) -> int:
     return conn.execute("SELECT COUNT(*) FROM news").fetchone()[0]
 
 
+def count_by_month_esg(
+    conn: sqlite3.Connection,
+    months_back: int = 6,
+    banks: list[str] | None = None,
+) -> list[dict]:
+    """Retorna [{month: 'YYYY-MM', E: int, S: int, G: int}, ...] para últimos N meses."""
+    sql = (
+        "SELECT substr(data, 1, 7) AS month, esg_tag, COUNT(*) AS n "
+        "FROM news WHERE is_fake_flag = 0 "
+        "AND data >= date('now', ?)"
+    )
+    params: list = [f"-{months_back} months"]
+    if banks:
+        placeholders = ",".join("?" * len(banks))
+        sql += f" AND banco_tag IN ({placeholders})"
+        params.extend(banks)
+    sql += " GROUP BY month, esg_tag ORDER BY month"
+    rows = conn.execute(sql, params).fetchall()
+
+    buckets: dict[str, dict] = {}
+    for r in rows:
+        m = r[0]
+        if m not in buckets:
+            buckets[m] = {"month": m, "E": 0, "S": 0, "G": 0}
+        if r[1] in ("E", "S", "G"):
+            buckets[m][r[1]] = r[2]
+    return list(buckets.values())
+
+
 def count_by_bank(
     conn: sqlite3.Connection,
     start_date: date,
