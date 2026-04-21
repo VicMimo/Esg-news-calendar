@@ -125,31 +125,50 @@ def render_sidebar_filters() -> tuple[list[str], list[str]]:
 
 
 def render_export_csv(articles: list[dict], filename: str = "esg_news.csv") -> None:
-    """Botão de download CSV das notícias filtradas."""
+    """Botão de download CSV das notícias filtradas — formatado para Excel BR."""
     if not articles:
         return
     import io
     import csv
+    from datetime import date as _date
     from config.settings import BANK_DISPLAY_NAMES, ESG_LABELS
 
+    def _fmt_date(v) -> str:
+        if isinstance(v, _date):
+            return v.strftime("%d/%m/%Y")
+        if isinstance(v, str) and len(v) >= 10:
+            try:
+                return _date.fromisoformat(v[:10]).strftime("%d/%m/%Y")
+            except Exception:
+                return v
+        return str(v) if v else ""
+
+    def _clean(v) -> str:
+        if v is None:
+            return ""
+        # Remove quebras de linha para não quebrar a célula do Excel
+        return str(v).replace("\r", " ").replace("\n", " ").strip()
+
     buf = io.StringIO()
-    writer = csv.DictWriter(
+    writer = csv.writer(
         buf,
-        fieldnames=["data", "banco", "categoria", "titulo", "resumo", "fonte", "link"],
+        delimiter=";",              # Excel BR espera ponto-e-vírgula
         quoting=csv.QUOTE_ALL,
+        lineterminator="\r\n",
     )
-    writer.writeheader()
+    writer.writerow(["Data", "Banco", "Categoria ESG", "Título", "Resumo", "Fonte", "Link"])
     for a in articles:
-        writer.writerow({
-            "data": a.get("data", ""),
-            "banco": BANK_DISPLAY_NAMES.get(a.get("banco_tag", ""), a.get("banco_tag", "")),
-            "categoria": ESG_LABELS.get(a.get("esg_tag", ""), a.get("esg_tag", "")),
-            "titulo": a.get("titulo", ""),
-            "resumo": a.get("resumo", "") or "",
-            "fonte": a.get("fonte", "") or "",
-            "link": a.get("link", ""),
-        })
-    csv_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")  # BOM para Excel abrir com acentos
+        writer.writerow([
+            _fmt_date(a.get("data")),
+            BANK_DISPLAY_NAMES.get(a.get("banco_tag", ""), a.get("banco_tag", "")),
+            ESG_LABELS.get(a.get("esg_tag", ""), a.get("esg_tag", "")),
+            _clean(a.get("titulo")),
+            _clean(a.get("resumo")),
+            _clean(a.get("fonte")),
+            _clean(a.get("link")),
+        ])
+    # BOM UTF-8 para Excel reconhecer acentos
+    csv_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
     st.sidebar.download_button(
         label="📥 Exportar CSV",
         data=csv_bytes,
