@@ -355,7 +355,7 @@ TRUSTED_DOMAINS = {
     "safra.com.br",
     "oespecialista.safra.com.br",
     "xpi.com.br",
-    "conteudos.xpi.com.br",
+    # "conteudos.xpi.com.br" — REMOVIDO: blog editorial, fala do mercado e não da XP como banco
     "bancointer.com.br",
     "c6bank.com.br",
     "sicoob.com.br",
