@@ -11,6 +11,51 @@ from config.settings import (
 
 _DAYS_PT = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
 _MAX_CARDS_PER_DAY = 3
+_MONTHS_PT = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+]
+
+
+_dialog = getattr(st, "dialog", None) or getattr(st, "experimental_dialog", None)
+
+
+def _render_day_details_body(day_iso: str, articles: list[dict]) -> None:
+    try:
+        d = date.fromisoformat(day_iso)
+        header = f"{d.day} de {_MONTHS_PT[d.month - 1]} de {d.year}"
+    except Exception:
+        header = day_iso
+    st.markdown(f"### {header}")
+    st.caption(f"{len(articles)} notícia{'s' if len(articles) != 1 else ''}")
+    st.divider()
+    for a in articles:
+        tag = a.get("esg_tag", "unknown")
+        banco_tag = a.get("banco_tag", "")
+        banco = BANK_DISPLAY_NAMES.get(banco_tag, banco_tag)
+        bank_color = BANK_COLORS.get(banco_tag, "#6c757d")
+        esg_color = ESG_COLORS.get(tag, "#6c757d")
+        emoji = ESG_EMOJIS.get(tag, "📰")
+        titulo = a.get("titulo", "")
+        link = a.get("link", "#")
+        resumo = a.get("resumo") or ""
+        fonte = a.get("fonte") or ""
+
+        fonte_html = f'<span style="opacity:0.6;font-size:0.75rem;">{fonte}</span>' if fonte else ""
+        resumo_html = f'<div style="margin-top:6px;font-size:0.85rem;opacity:0.85;">{resumo}</div>' if resumo else ""
+        st.markdown(
+            f'<div style="border-left:4px solid {bank_color};padding:10px 14px;margin-bottom:12px;'
+            f'background:color-mix(in srgb, {bank_color} 6%, transparent);border-radius:6px;">'
+            f'<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">'
+            f'<span style="background:{bank_color};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;">{banco}</span>'
+            f'<span style="background:{esg_color};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.75rem;">{emoji} {tag}</span>'
+            f'{fonte_html}'
+            f'</div>'
+            f'<a href="{link}" target="_blank" style="font-weight:600;font-size:1rem;text-decoration:none;">{titulo}</a>'
+            f'{resumo_html}'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
 
 def build_month_grid(year: int, month: int) -> list[list[date | None]]:
@@ -19,6 +64,18 @@ def build_month_grid(year: int, month: int) -> list[list[date | None]]:
         [date(year, month, day) if day != 0 else None for day in week]
         for week in cal
     ]
+
+
+def _show_day_details(day_iso: str, articles: list[dict]) -> None:
+    """Abre modal com todas as notícias do dia (fallback: st.expander se dialog indisponível)."""
+    if _dialog is not None:
+        @_dialog("Notícias do dia", width="large")
+        def _modal():
+            _render_day_details_body(day_iso, articles)
+        _modal()
+    else:
+        with st.expander("Notícias do dia", expanded=True):
+            _render_day_details_body(day_iso, articles)
 
 
 def _detect_mentioned_banks(article: dict, primary_tag: str) -> list[str]:
@@ -185,13 +242,21 @@ def render_calendar(articles: list[dict], start: date, end: date = None) -> None
                 for article in visible:
                     html += render_article_card(article)
 
-                if hidden_count > 0:
-                    html += (
-                        f'<div class="more-articles">+ {hidden_count} mais notícia{"s" if hidden_count > 1 else ""}</div>'
-                    )
-
                 html += "</div>"
                 st.markdown(html, unsafe_allow_html=True)
+
+                if day_articles:
+                    label = (
+                        f"+ {hidden_count} mais · ver dia"
+                        if hidden_count > 0
+                        else "Ver dia"
+                    )
+                    if st.button(
+                        label,
+                        key=f"day_{day.isoformat()}",
+                        use_container_width=True,
+                    ):
+                        _show_day_details(day.isoformat(), day_articles)
 
     if not articles:
         selected_banks = [a.get("banco_tag") for a in articles]

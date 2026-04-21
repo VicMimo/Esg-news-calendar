@@ -107,6 +107,19 @@
     font-style: italic;
 }
 
+/* Botão 'Ver dia' dentro da célula do calendário */
+[data-testid="stButton"] > button[kind="secondary"] {
+    font-size: 0.7rem !important;
+    padding: 2px 6px !important;
+    min-height: 0 !important;
+    border-radius: 4px !important;
+    margin-top: 4px !important;
+    opacity: 0.75;
+}
+[data-testid="stButton"] > button[kind="secondary"]:hover {
+    opacity: 1;
+}
+
 .esg-dots {
     display: flex;
     gap: 2px;
